@@ -1,6 +1,5 @@
 use crate::{CR, LF};
-use nodash::array::pack_bytes;
-use std::hash::poseidon2::Poseidon2;
+use nodash::{pack_bytes, poseidon2};
 
 /**
  * Computes R by packing bytes into fields before hashing to reduce the work
@@ -17,7 +16,7 @@ fn compressed_r<let N: u32>(encoded: [u8; N], decoded: [u8; N]) -> Field {
         input[i] = encoded_packed[i];
         input[i + N / 31 + 1] = decoded_packed[i];
     }
-    Poseidon2::hash(input, input.len())
+    poseidon2(input)
 }
 
 /**
@@ -36,10 +35,10 @@ pub fn find_zeroes<let N: u32>(encoded: [u8; N]) -> [bool; N] {
     // find indexes of chars to zero
     let mut should_zero: [bool; N] = [false; N];
     should_zero[0] = is_break[0];
-    should_zero[1] = is_break[1] + is_break[0];
+    should_zero[1] = is_break[1] | is_break[0];
     should_zero[N - 1] = is_break[N - 3];
     for i in 2..N - 1 {
-        should_zero[i] = is_break[i] + is_break[i - 1] + is_break[i - 2];
+        should_zero[i] = is_break[i] | is_break[i - 1] | is_break[i - 2];
     }
 
     should_zero

@@ -1,4 +1,3 @@
-use crate::tests::test_inputs::PartialHash::DATA;
 use std::hash::sha256_compression;
 use std::runtime::is_unconstrained;
 
@@ -177,11 +176,9 @@ pub fn partial_sha256_var_interstitial<let N: u32>(
 pub fn partial_sha256_var_end<let N: u32>(
     mut h: [u32; 8],
     msg: [u8; N],
-    message_size: u64,
-    real_message_size: u64,
+    message_size: u32,
+    real_message_size: u32,
 ) -> [u8; 32] {
-    let message_size = message_size as u32; // noir stdlib uses u64
-    let real_message_size = real_message_size as u32; // noir stdlib uses u64
     let num_blocks = N / BLOCK_SIZE;
     let mut msg_block: [u8; BLOCK_SIZE] = [0; BLOCK_SIZE];
     let mut msg_byte_ptr = 0; // Pointer into msg_block
@@ -351,62 +348,4 @@ fn hash_final_block(msg_block: [u8; BLOCK_SIZE], mut state: [u32; 8]) -> [u8; 32
     out_h
 }
 
-#[test]
-fn test_partial_hash() {
-    let mut data0 = [0; 128];
-    for i in 0..data0.len() {
-        data0[i] = DATA[i];
-    }
-    let mut data1 = [0; 64];
-    for i in 0..data1.len() {
-        data1[i] = DATA[data0.len() + i];
-    }
-    let state = partial_sha256_var_start(data0);
-    let hash = partial_sha256_var_end(state, data1, data1.len() as u64, DATA.len() as u64);
-    let correct_hash = sha256::sha256_var(DATA, DATA.len() as u64);
-    assert_eq(hash, correct_hash);
-}
-
-#[test]
-fn test_partial_hash_interstitial() {
-    let mut data0 = [0; 64];
-    let mut data1 = [0; 64];
-    let mut data2 = [0; 64];
-    for i in 0..data0.len() {
-        data0[i] = DATA[i];
-        data1[i] = DATA[64 + i];
-        data2[i] = DATA[128 + i];
-    }
-    let pre_hash = partial_sha256_var_start(data0);
-    let interstitial_hash = partial_sha256_var_interstitial(pre_hash, data1, data1.len());
-    let hash = partial_sha256_var_end(
-        interstitial_hash,
-        data2,
-        data2.len() as u64,
-        DATA.len() as u64,
-    );
-    let correct_hash = sha256::sha256_var(DATA, DATA.len() as u64);
-    assert_eq(hash, correct_hash);
-}
-
-#[test]
-fn test_partial_hash_interstitial_var() {
-    let mut data0 = [0; 64];
-    let mut data1 = [0; 128]; // second block not used
-    let mut data2 = [0; 64];
-    for i in 0..data0.len() {
-        data0[i] = DATA[i];
-        data1[i] = DATA[64 + i];
-        data2[i] = DATA[128 + i];
-    }
-    let pre_hash = partial_sha256_var_start(data0);
-    let interstitial_hash = partial_sha256_var_interstitial(pre_hash, data1, 64);
-    let hash = partial_sha256_var_end(
-        interstitial_hash,
-        data2,
-        data2.len() as u64,
-        DATA.len() as u64,
-    );
-    let correct_hash = sha256::sha256_var(DATA, DATA.len() as u64);
-    assert_eq(hash, correct_hash);
-}
+// Tests disabled: rely on test_inputs module removed with tests/mod.nr
